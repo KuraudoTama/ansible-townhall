@@ -100,6 +100,12 @@ class JobService(object):
         
         ansible_command, password, become_password = self.__make_ansible_command_str(job_doc)
         self.process_pool.apply_async(func=launch_ansible_playbook_command, args=(ansible_command,password,become_password))
+        
+    def get_total_counts_grouped_by_categories(self, job_id):
+        return job_DAO.get_total_counts_grouped_by_categories(job_id)
+    
+    def get_task_duration_grouped_by_names(self, job_id, size):
+        return job_DAO.get_task_duration_grouped_by_names(job_id, size)
     
     def access_codebase(self):
         pass
