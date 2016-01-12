@@ -1,0 +1,97 @@
+{% extends "layout.html" %}
+{% set active_page = 'about' %}
+{% block body %}
+<section class="content-header">
+    <h1>
+        Create A New Ansible Job
+    </h1>
+    <ol class="breadcrumb">
+        <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
+        <li class="active">Dashboard</li>
+    </ol>
+</section>
+
+<!-- Main content -->
+<section class="content">
+    <div class="box box-success">
+        <div class="box-header with-border">
+            <h3 class="box-title">Properties</h3>
+        </div>
+
+        <!-- /.box-header -->
+        <div class="box-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input class="form-control">
+                        <label>Inventory</label>
+                        <input class="form-control">
+                        <label>User Name</label>
+                        <input class="form-control">
+                    </div>
+                    <!-- /.form-group -->
+                </div>
+                <!-- /.col -->
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input class="form-control">
+                        <label>Playbook</label>
+                        <input class="form-control">
+                        <label>Password</label>
+                        <input class="form-control">
+                    </div>
+                    <!-- /.form-group -->
+                </div>
+                <!-- /.row -->
+            </div>
+
+            <div class="row">
+                <div class="col-md-5">
+                    <label>Private Key File</label>
+                    <input class="form-control">
+                </div>
+            </div>
+            <br>
+
+            <div class="row">
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label>Become Method</label>
+                        <input class="form-control">
+                    </div>
+                </div>
+
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label>Become Username</label>
+                        <input class="form-control">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label>Become Password</label>
+                        <input class="form-control">
+                    </div>
+                </div>
+                <!-- /.box-body -->
+            </div>
+
+            <div class="row">
+                <div class="col-md-2">
+                    <label>Fork</label>
+                    <input class="form-control">
+                </div>
+            </div>
+            <br>
+
+            <div class="box-footer">
+                Visit <a href="#">the documentation</a> for more examples and information
+                about
+                the plugin.
+            </div>
+            <button type="submit" class="btn btn-primary">Launch</button>
+</section><!-- /.content -->
+
+{% endblock %}
