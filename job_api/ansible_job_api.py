@@ -234,3 +234,52 @@ def get_job_details(job_id):
     logger.info("Exit")
     return response
 
+
+@api.route("/api/v1/ansible-job/log/total-counts-grouped-by-categories/<job_id>")
+def get_total_counts_grouped_by_categories(job_id): 
+    logger.info("Enter")
+    response = None
+    try:
+        count_dict = job_service.get_total_counts_grouped_by_categories(job_id)
+        response = make_response(json.jsonify(count_dict), 200)
+    except RecordNotFoundException, e:
+        response = _make_error_response(404, str(e))
+    except Exception, e:
+        response = _make_error_response(500, str(e))
+        
+    logger.info("Exit")
+    return response
+
+@api.route("/api/v1/ansible-job/log/task-duration-grouped-by-names/<job_id>", methods=["POST"])
+def get_task_duration_grouped_by_names(job_id): 
+    logger.info("Enter")
+    response = None
+    try:
+        _check_content_type("application/json")
+        logger.info("Request Parameters : %s" % request.data)
+        request_parameters = request.get_json()
+        if not isinstance(request_parameters, dict) or not request_parameters:
+            raise BadRequest
+        
+        size = request_parameters.get("size", None)
+        if size is None:
+            raise MissingKeyException("The 'size' field is required.")
+        if not isinstance(size, int):
+            raise InvalidDataTypeException("The 'size' must be integer.")
+        if size <= 0:
+            raise InvalidDataException("The 'size' must be greater than 0.")
+        
+        task_dict = job_service.get_task_duration_grouped_by_names(job_id, size)
+        response = make_response(json.jsonify(task_dict), 200)
+    except InvalidContentTypeException, e:
+        response = _make_error_response(415, str(e))
+    except BadRequest, e:
+        error_message = "Invalid json request body."
+        response = _make_error_response(400, error_message)
+    except (MissingKeyException, InvalidDataTypeException, InvalidDataException), e:
+        response = _make_error_response(400, str(e))
+    except Exception, e:
+        response = _make_error_response(500, str(e))
+    logger.info("Exit")
+    return response
+
