@@ -1,19 +1,17 @@
-from job_service.ansible_job_service import job_service
-from job_logging.ansible_job_logger import logger
-from job_exception.ansible_job_exception import InvalidContentTypeException
-from job_exception.ansible_job_exception import MissingKeyException
-from job_exception.ansible_job_exception import MissingDataException
-from job_exception.ansible_job_exception import InvalidDataTypeException
-from job_exception.ansible_job_exception import InvalidDataException
-from job_exception.ansible_job_exception import RecordNotFoundException
-from flask import Flask
-from flask import request
 from flask import json
 from flask import make_response
+from flask import request
 from werkzeug.exceptions import BadRequest
-from . import api
 
-#app = Flask("ansible-job")
+from job_exception.ansible_job_exception import InvalidContentTypeException
+from job_exception.ansible_job_exception import InvalidDataException
+from job_exception.ansible_job_exception import InvalidDataTypeException
+from job_exception.ansible_job_exception import MissingDataException
+from job_exception.ansible_job_exception import MissingKeyException
+from job_exception.ansible_job_exception import RecordNotFoundException
+from job_logging.ansible_job_logger import logger
+from job_service.ansible_job_service import job_service
+from . import api
 
 
 def _check_content_type(required_content_type):
@@ -236,6 +234,3 @@ def get_job_details(job_id):
     logger.info("Exit")
     return response
 
-
-# if __name__ == "__main__":
-#     app.run(host='0.0.0.0')

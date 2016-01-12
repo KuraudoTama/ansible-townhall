@@ -2,7 +2,7 @@ from logging.handlers import RotatingFileHandler
 import logging
 
 LOG_FILE = "job_logging/ansible_job.log"
-LOG_FILE_SIZE = 10*1024*1024
+LOG_FILE_SIZE = 10 * 1024 * 1024
 LOG_FILE_COUNT = 3
 LOG_FORMAT = "%(asctime)s::%(name)s::%(filename)s::%(funcName)s::[line:%(lineno)d]-%(message)s"
 LOGGER_NAME = "ansible-job"
