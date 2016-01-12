@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+{% set active_page = 'about' %}
+{% block body %}
+<section class="content-header">
+    <h1>
+        Create A New Pipeline ...
+    </h1>
+    <ol class="breadcrumb">
+        <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
+        <li class="active">Dashboard</li>
+    </ol>
+</section>
+
+<!-- Main content -->
+<section class="content">
+
+    <div class="box-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Input</label>
+                    <select class="form-control select2" style="width: 100%;">
+                        <option selected="selected">Alabama</option>
+                        <option>Alaska</option>
+                        <option>California</option>
+                        <option>Delaware</option>
+                        <option>Tennessee</option>
+                        <option>Texas</option>
+                        <option>Washington</option>
+                    </select>
+                </div><!-- /.form-group -->
+                <button type="submit" class="btn btn-primary">Add</button>
+            </div>
+        </div>
+    </div>
+
+</section><!-- /.content -->
+
+{% endblock %}

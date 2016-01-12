@@ -1,6 +1,7 @@
 from . import ui
+from flask import render_template
 
 
 @ui.route('/ui')
 def ui():
-    return 'hello ansible'
+    return render_template('template_index.html')
