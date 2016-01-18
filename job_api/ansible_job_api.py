@@ -26,25 +26,25 @@ def _make_error_response(status_code, error_message):
     return make_response(json.jsonify(returned_error_dict), status_code)
 
 
-@api.route("/api/v1/ansible-job/job-list", methods=["POST"])
+@api.route("/api/v1/ansible-job/job-list")
 def get_job_list():
     logger.info("Enter")
     response = None
     try:
-        _check_content_type("application/json")
-        logger.info("Request Parameters : %s" % request.data)
-        request_parameters = request.get_json()
-        if not isinstance(request_parameters, dict) or not request_parameters:
-            raise BadRequest
-
-        page_index = request_parameters.get("page_index", None)
-        page_size = request_parameters.get("page_size", None)
+        page_index = request.args.get("page_index", None)
+        page_size = request.args.get("page_size", None)
+        
+        logger.info("page_index is : %s" % page_index)
+        logger.info("page_size is : %s" % page_size)
 
         if (page_index is None) or (page_size is None):
-            raise MissingKeyException("Both 'page_index' and 'page_size' keys are required in the json request body.")
+            raise MissingKeyException("Both 'page_index' and 'page_size' keys are required.")
 
-        if (not isinstance(page_index, int)) or (not isinstance(page_size, int)):
-            raise InvalidDataTypeException("The values of 'page_index' and 'page_size' must be integer.")
+        if (not page_index.isdigit()) or (not page_size.isdigit()):
+            raise InvalidDataTypeException("The values of 'page_index' and 'page_size' must be positive integer.")
+        else:
+            page_index = int(page_index)
+            page_size = int(page_size)
 
         if (page_index < 1) or (page_size < 1):
             raise InvalidDataException(
@@ -52,12 +52,7 @@ def get_job_list():
 
         job_list = job_service.get_job_list(page_index, page_size)
         response = make_response(json.jsonify(job_list), 200)
-
-    except InvalidContentTypeException, e:
-        response = _make_error_response(415, str(e))
-    except BadRequest, e:
-        error_message = "Invalid json request body.Please follow the format {'page_index':your_value, 'page_size':your_value}"
-        response = _make_error_response(400, error_message)
+        
     except (MissingKeyException, InvalidDataTypeException, InvalidDataException), e:
         response = _make_error_response(400, str(e))
     except Exception, e:
@@ -250,32 +245,26 @@ def get_total_counts_grouped_by_categories(job_id):
     logger.info("Exit")
     return response
 
-@api.route("/api/v1/ansible-job/log/task-duration-grouped-by-names/<job_id>", methods=["POST"])
+@api.route("/api/v1/ansible-job/log/task-duration-grouped-by-names/<job_id>")
 def get_task_duration_grouped_by_names(job_id): 
     logger.info("Enter")
     response = None
     try:
-        _check_content_type("application/json")
-        logger.info("Request Parameters : %s" % request.data)
-        request_parameters = request.get_json()
-        if not isinstance(request_parameters, dict) or not request_parameters:
-            raise BadRequest
-        
-        size = request_parameters.get("size", None)
+        size = request.args.get("size", None)
+        logger.info("size is : %s" % size)
         if size is None:
             raise MissingKeyException("The 'size' field is required.")
-        if not isinstance(size, int):
-            raise InvalidDataTypeException("The 'size' must be integer.")
+        if not size.isdigit():
+            raise InvalidDataTypeException("The 'size' must be positive integer.")
+        else:
+            size = int(size)
+            
         if size <= 0:
             raise InvalidDataException("The 'size' must be greater than 0.")
         
         task_dict = job_service.get_task_duration_grouped_by_names(job_id, size)
         response = make_response(json.jsonify(task_dict), 200)
-    except InvalidContentTypeException, e:
-        response = _make_error_response(415, str(e))
-    except BadRequest, e:
-        error_message = "Invalid json request body."
-        response = _make_error_response(400, error_message)
+        
     except (MissingKeyException, InvalidDataTypeException, InvalidDataException), e:
         response = _make_error_response(400, str(e))
     except Exception, e:
