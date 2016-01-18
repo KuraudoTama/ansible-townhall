@@ -7,6 +7,7 @@ from job_logging.ansible_job_logger import logger
 class JobPersistence(object):
     def __init__(self):
         self.job_collection = job_db["ansible_job"]
+        self.log_collection = job_db["ansible_log"]
 
     def get_job_list(self, page_index, page_size):
         skip_item = (page_index - 1) * page_size
