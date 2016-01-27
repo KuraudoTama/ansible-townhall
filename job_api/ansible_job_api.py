@@ -26,8 +26,16 @@ def _make_error_response(status_code, error_message):
     return make_response(json.jsonify(returned_error_dict), status_code)
 
 
-@api.route("/api/v1/ansible-job/job-list")
+@api.route("/jobs")
 def get_job_list():
+    '''
+    Get the job list from the DB
+    To call this API, the form is:
+    http://<host>:<port>/jobs?page_index=<positive integer>&page_size=<positive integer>
+    Method: Get
+    
+    Both query parameters 'page_index' and 'page_size' must be given and they are positive integers.
+    '''
     logger.info("Enter")
     response = None
     try:
@@ -62,13 +70,46 @@ def get_job_list():
     return response
 
 
-@api.route("/api/v1/ansible-job/codebase")
-def access_codebase():
-    pass
+#@api.route("/api/v1/ansible-job/codebase")
+#def access_codebase():
+    #pass
 
 
-@api.route("/api/v1/ansible-job/job", methods=["POST"])
+@api.route("/jobs", methods=["POST"])
 def create_job():
+    '''
+    Store a job and launch it. After launching the job, this api returns immediately with a new job id in response.
+    Meanwhile, the job executes in the backend asynchronously.
+    To call this API, the form is:
+    http://<host>:<port>/jobs
+    Method: POST
+    Content-Type: application/json
+    
+    In request body:
+    'job_name', 'inventory_path' and 'playbook_path' must be given.
+    'job_description', 'forks' and 'credentials' block are optional.
+    
+    In 'credentials' block:
+    if 'username' is given, either 'password' or 'private_key_file' must be given.
+    if 'password' or 'private_key_file' is not empty, the corresponding 'username' must be given.
+    'become_method' is optional.
+    if 'become_user' is given, the 'become_password' must be provided, vice versa.
+    
+    Request body Example:
+    {
+        "name" : "test job 1",
+        "description" : "test job 1 description.",
+        "inventory" : "/etc/ansible/hosts",
+        "playbook" : "/root/ansible_log_test/ansible_test.yml",
+        "forks" : 5,
+        "credentials" : {
+            "username" : "root",
+            "password" : "MbvG6Nw8",
+            "become_password" : "MbvG6Nw8",
+            "become_user" : "root"
+            }
+    }
+    '''
     logger.info("Enter")
     response = None
     try:
@@ -192,8 +233,18 @@ def create_job():
     return response
 
 
-@api.route("/api/v1/ansible-job/job-status/<job_id>")
+@api.route("/jobs/job-status/<job_id>")
 def get_job_status(job_id):
+    '''
+    Retrieve the job status.
+    The client should periodically call this api to get the latest job status.
+    Job status includes: 'New', 'Executing', 'Failure' and 'Success'.
+    To call this API, the form is:
+    http://<host>:<port>/jobs/job-status/<job_id>
+    Method: Get
+    
+    It returns a 'status' corresponding to above job_id.
+    '''
     logger.info("Enter")
     response = None
     try:
@@ -211,8 +262,14 @@ def get_job_status(job_id):
     return response
 
 
-@api.route("/api/v1/ansible-job/job/<job_id>")
+@api.route("/jobs/<job_id>")
 def get_job_details(job_id):
+    '''
+    Retrieve the job details.
+    To call this API, the form is:
+    http://<host>:<port>/jobs/<job_id>
+    Method: Get
+    '''
     logger.info("Enter")
     response = None
     try:
@@ -230,8 +287,24 @@ def get_job_details(job_id):
     return response
 
 
-@api.route("/api/v1/ansible-job/log/total-counts-grouped-by-categories/<job_id>")
+@api.route("/logs/total-counts-grouped-by-categories/<job_id>")
 def get_total_counts_grouped_by_categories(job_id): 
+    '''
+    Get the total counts of ansible task logs that are associated with 'job_id' and grouped by categories.
+    The categories of ansible task are 'FAILED', 'OK' and 'UNREACHABLE'.
+    This API intends to be used by client for drawing the chart. 
+    
+    To call this API, the form is:
+    http://<host>:<port>/logs/total-counts-grouped-by-categories/<job_id>
+    Method: Get
+    
+    Response body example:
+    {
+        'FAILED' : 2,
+        'OK' : 10,
+        'UNREACHABLE' : 0
+    }
+    '''
     logger.info("Enter")
     response = None
     try:
@@ -245,8 +318,26 @@ def get_total_counts_grouped_by_categories(job_id):
     logger.info("Exit")
     return response
 
-@api.route("/api/v1/ansible-job/log/task-duration-grouped-by-names/<job_id>")
+@api.route("/logs/task-duration-grouped-by-names/<job_id>")
 def get_task_duration_grouped_by_names(job_id): 
+    '''
+    Get each task duration which is associated with 'job_id' and grouped by task names.
+    A task in playbook could be executed multiple times, so the task duration is an accumulated value.
+    The value of the duration is seconds.
+    This API intends to be used by client for drawing the chart. 
+    
+    To call this API, the form is:
+    http://<host>:<port>/logs/task-duration-grouped-by-names/<job_id>
+    Method: Get
+    
+    Response body example:
+    {
+        task_duration_list:[
+            {'Install MongoDB' : 1.55555555},
+            {'Show print message' : 0.00111}
+        ]
+    }
+    '''
     logger.info("Enter")
     response = None
     try:
