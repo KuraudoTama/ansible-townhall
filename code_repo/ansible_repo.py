@@ -18,6 +18,11 @@ class InvalidGitRepoUrlException(Exception):
 class AnsibleRepoEncoder(JSONEncoder):
     def default(self, o):
         return {
+            "name": o.name,
+            "localDirectory": o.local_repo_path,
+            "layout": o.get_layout(),
+            "gitRepoUrl": o.git_repo_url,
+            "gitBranch": o.git_branch,
             "inventories": json.loads(json.dumps(o.inventories, cls=AnsibleInventoryEncoder)),
             "playbooks": json.loads(json.dumps(o.playbooks, cls=AnsilePlaybookEncoder)),
             "roles": json.loads(json.dumps(o.roles, cls=AnsibleRoleEncoder))
@@ -25,68 +30,81 @@ class AnsibleRepoEncoder(JSONEncoder):
 
 
 class AnsibleRepo(object):
-    def __init__(self, git_repo_url=None, git_branch='master', layout=None, base_dir='/etc/ansible-townhall/repos/'):
+    def __init__(self):
         """
         Initialize an AnsibleRepo object.
 
-        :param base_dir: The base directory to store the git repo
         :return: The instance
         """
         self._regex = '(\w+://)(.+@)*([\w\d\.]+)(:[\d]+){0,1}/*(.*/(.*)\.git)'
 
-        self.base_dir = base_dir
-        self.git_repo_url = git_repo_url
-        self.git_branch = git_branch
-        self._layout = layout
+        self.name = None
 
-        self.repo_name = None
-        self.repo_dir = None
-        self.git_repo = None
+        self.local_repo_path = None
+
+        self.git_repo_url = None
+        self.git_branch = None
+
+        self._git_repo_obj = None
+
+        self._layout = None
 
         self.roles = None
         self.playbooks = None
         self.inventories = None
 
-    def load(self, local_repo_path):
-        self.repo_name = local_repo_path.rstrip('/').split('/')[-1]
-        self.repo_dir = local_repo_path
-        self.git_repo = Repo(local_repo_path)
+    def load_from_json(self, json_data):
+        """
+        Rebuild the object from json
 
-    def clone(self, git_repo_url=None, git_branch='master'):
+        :param json_data:
+        :return:
+        """
+        self.name = json_data['name']
+        self.local_repo_path = json_data['localDirectory']
+        self.git_repo_url = json_data['gitRepoUrl']
+        self.git_branch = json_data['gitBranch']
+        self._layout = json_data['layout']
+        self._git_repo_obj = Repo(self.local_repo_path)
+
+    def load_from_local(self, local_repo_path, layout):
+        self.name = local_repo_path.rstrip('/').split('/')[-1]
+        self.local_repo_path = local_repo_path
+        self._layout = layout
+        self._git_repo_obj = Repo(local_repo_path)
+        self.git_repo_url = self._git_repo_obj.remote().config_reader.get('url')
+        self.git_branch = self._git_repo_obj.active_branch.name
+
+    def load_from_git(self, git_repo_url, layout, git_branch='master', local_base_path='/etc/ansible-townhall/repos/'):
         """
         Clone the specified code repo to local store and generate metadata for it.
 
         :param git_repo_url: The URL of the git repo
         :param git_branch: The git branch to clone
+        :param local_base_path: The local base path to clone the git repo to
         :return: True if everything is OK.
         """
         self.git_repo_url = git_repo_url
-        if not self.git_repo_url:
-            return False
-
         self.git_branch = git_branch
 
-        self.repo_name = self._get_repo_name()
-        self.repo_dir = ''.join([self.base_dir, self.repo_name])
+        self._layout = layout
 
-        self._create_repo_directory()
+        self.name = self._get_repo_name(self.git_repo_url)
+        self.local_repo_path = ''.join([local_base_path, self.name])
 
-        try:
-            self.git_repo = Repo.clone_from(self.git_repo_url, self.repo_dir, branch=self.git_branch)
-            return True
-        except:
-            return False
+        self._create_repo_directory(self.local_repo_path)
+        self._git_repo_obj = Repo.clone_from(self.git_repo_url, self.local_repo_path, branch=self.git_branch)
 
-    def generate_metadata(self, layout=None):
+    def get_layout(self):
+        return self._layout
+
+    def generate_metadata(self):
         """
         Generate the metadata for the repo against a specified layout.
 
         :param layout: A JSON dict to specify the layout of the Ansible repo
         :return: The metadata
         """
-        self._layout = layout
-        if not self._layout:
-            return None
         self.roles = self._process_roles(self._layout)
         self.playbooks = self._process_playbooks(self._layout)
         self.inventories = self._process_inventory(self._layout)
@@ -98,7 +116,7 @@ class AnsibleRepo(object):
         pattern_type = layout['inventory']['type']
         if pattern_type == 'filenames':
             for filename in layout['inventory']['pattern'].split(','):
-                inv_path = ''.join([self.repo_dir, layout['root'], filename])
+                inv_path = ''.join([self.local_repo_path, layout['root'], filename])
                 inventories[filename] = AnsibleInventory(inv_path)
             return inventories
 
@@ -108,7 +126,7 @@ class AnsibleRepo(object):
             return None
         pattern_type = layout['playbooks']['type']
         if pattern_type == 'regex':
-            playbooks_dir = ''.join([self.repo_dir, layout['root']])
+            playbooks_dir = ''.join([self.local_repo_path, layout['root']])
             for item in os.listdir(playbooks_dir):
                 playbook_path = ''.join([playbooks_dir, item])
                 if os.path.isfile(playbook_path) and re.match(layout['playbooks']['pattern'], item):
@@ -123,37 +141,32 @@ class AnsibleRepo(object):
         pattern_type = layout['roles']['type']
         if pattern_type == 'dirnames':
             # TODO: support multiple directories
-            roles_dir = ''.join([self.repo_dir, layout['root'], layout['roles']['pattern']])
+            roles_dir = ''.join([self.local_repo_path, layout['root'], layout['roles']['pattern']])
             for directory in os.listdir(roles_dir):
                 role = AnsibleRole(''.join([roles_dir, directory]))
                 roles[role.name] = role
             return roles
 
-    def _create_repo_directory(self):
-        if os.path.exists(self.repo_dir):
-            shutil.rmtree(self.repo_dir)
+    @staticmethod
+    def _create_repo_directory(local_repo_path):
+        if os.path.exists(local_repo_path):
+            shutil.rmtree(local_repo_path)
+        os.mkdir(local_repo_path)
 
-        os.mkdir(self.repo_dir)
-
-    def _get_repo_name(self):
-        m = re.match(self._regex, self.git_repo_url)
+    def _get_repo_name(self, git_repo_url):
+        m = re.match(self._regex, git_repo_url)
         if m:
             return m.groups()[-1]
         else:
-            raise InvalidGitRepoUrlException(self.git_repo_url)
+            raise InvalidGitRepoUrlException(git_repo_url)
 
 
 if __name__ == '__main__':
     repo = AnsibleRepo()
-    repo.load('/Users/akimotoakira/Box/git/icos-cd-services-deployer/')
-    layout = yaml.load(open('sample_layout.yaml').read())
-    repo.generate_metadata(layout)
+    test_layout = yaml.load(open('sample_layout.yaml').read())
+    repo.load_from_local('/Users/akimotoakira/Box/git/icos-cd-services-deployer/', test_layout)
+
+    repo.generate_metadata()
 
     print json.dumps(repo, cls=AnsibleRepoEncoder)
-    import pdb
 
-    pdb.set_trace()
-
-    # repo = AnsibleRepo('https://github.com/KuraudoTama/pyslack.git', base_dir='.')
-    # print repo.repo_dir
-    # repo.clone()
