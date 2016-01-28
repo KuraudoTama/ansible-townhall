@@ -1,0 +1,10 @@
+root: 'deployer/'
+roles:
+  type: dirnames
+  pattern: 'roles/'
+playbooks:
+  type: regex
+  pattern: '(.*)\.yml'
+inventory:
+  type: filenames
+  pattern: 'dev'
