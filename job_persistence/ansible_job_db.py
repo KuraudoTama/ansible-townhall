@@ -6,8 +6,15 @@ from job_logging.ansible_job_logger import logger
 
 class JobPersistence(object):
     def __init__(self):
+        logger.info("Initializing 'JobPersistence' object.")
         self.job_collection = job_db["ansible_job"]
-        self.log_collection = job_db["ansible_log"]
+        
+        LOG_COLLECTION_NAME = "ansible_log"
+        collection_name_list = job_db.collection_names(include_system_collections=False)
+        if LOG_COLLECTION_NAME not in collection_name_list:
+            job_db.create_collection(LOG_COLLECTION_NAME, size=1 * 1024 * 1024 * 1024, capped=True)
+        
+        self.log_collection = job_db[LOG_COLLECTION_NAME]
 
     def get_job_list(self, page_index, page_size):
         skip_item = (page_index - 1) * page_size
@@ -83,6 +90,16 @@ class JobPersistence(object):
             {"_id": ObjectId(job_id)},
             {"$set": {"status": job_status}}
         )
+        
+    def create_log(self, log_dict):
+        self.log_collection.insert_one(log_dict)
+        
+    
+    def get_failed_logs_count(self, job_id):
+        count = self.log_collection.find({"$or": [{"job_id": job_id, "category": "FAILED"},
+                                             {"job_id": job_id, "category": "UNREACHABLE"}]}).count()
+        
+        return count
 
 
 job_DAO = JobPersistence()
