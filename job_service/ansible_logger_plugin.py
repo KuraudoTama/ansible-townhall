@@ -1,24 +1,9 @@
 import json
 import time
+import pprint
 
 from bson.objectid import ObjectId
-from pymongo import MongoClient
-
-DB_HOST = "127.0.0.1"
-DB_PORT = 27017
-DB_NAME = "ansible_job_dw"
-LOG_COLLECTION_NAME = "ansible_log"
-JOB_COLLECTION_NAME = "ansible_job"
-
-ansible_db_connection = MongoClient(DB_HOST, DB_PORT)
-ansible_db = ansible_db_connection[DB_NAME]
-collection_name_list = ansible_db.collection_names(include_system_collections=False)
-
-if LOG_COLLECTION_NAME not in collection_name_list:
-    ansible_db.create_collection(LOG_COLLECTION_NAME, size=1 * 1024 * 1024 * 1024, capped=True)
-
-log_collection = ansible_db[LOG_COLLECTION_NAME]
-job_collection = ansible_db[JOB_COLLECTION_NAME]
+from job_persistence.ansible_job_db import job_DAO
 
 
 class CallbackModule(object):
@@ -48,11 +33,15 @@ class CallbackModule(object):
                 print data
                 print "----------------------------------------------------------------------------------"
                 now = time.strftime(self.TIME_FORMAT, time.localtime())
-                #                     ansible_job_dict = self.play.playbook.extra_vars
-                #                     ansible_job_id = ansible_job_dict.get("job_id")
-                log_collection.insert_one(
-                    dict(now=now, node_IP=host, task_name=self.current, category=category, task_duration=duration,
-                         job_id=self.ansible_job_id, data=data))
+                job_DAO.create_log(
+                                   dict(now=now, 
+                                        node_IP=host, 
+                                        task_name=self.current, 
+                                        category=category, 
+                                        task_duration=duration,
+                                        job_id=self.ansible_job_id, 
+                                        data=data)
+                                   )
 
     def on_any(self, *args, **kwargs):
         pass
@@ -86,15 +75,12 @@ class CallbackModule(object):
     def runner_on_async_failed(self, host, res, jid):
         pass
 
-    def __update_job_status(self, job_id, job_status):
-        job_collection.update_one({"_id": ObjectId(job_id)},
-                                  {"$set": {"status": job_status}}
-                                  )
-
     def playbook_on_start(self):
         ansible_job_dict = self.playbook.extra_vars
+        ansible_playbook_name = self.playbook.filename
+        print "Current playbook name is:", ansible_playbook_name
         self.ansible_job_id = ansible_job_dict.get("job_id")
-        self.__update_job_status(self.ansible_job_id, "Executing")
+        job_DAO.update_job_status(self.ansible_job_id, "Executing")
         print "Get job id on playbook start:", self.ansible_job_id
 
     def playbook_on_notify(self, host, handler):
@@ -131,10 +117,11 @@ class CallbackModule(object):
         pass
 
     def playbook_on_stats(self, stats):
-        count = log_collection.find({"$or": [{"job_id": self.ansible_job_id, "category": "FAILED"},
-                                             {"job_id": self.ansible_job_id, "category": "UNREACHABLE"}]}).count()
+        count = job_DAO.get_failed_logs_count(self.ansible_job_id)
         print "Failure count:", count
         if count > 0:
-            self.__update_job_status(self.ansible_job_id, "Failure")
+            job_DAO.update_job_status(self.ansible_job_id, "Failure")
         else:
-            self.__update_job_status(self.ansible_job_id, "Success")
+            job_DAO.update_job_status(self.ansible_job_id, "Success")
+        
+        pprint.pprint(stats)
