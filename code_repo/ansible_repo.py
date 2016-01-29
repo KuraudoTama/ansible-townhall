@@ -1,10 +1,8 @@
+import json
 import os
 import re
 import shutil
-import json
-from json import JSONEncoder
 
-import yaml
 from git import Repo
 
 from ansible_objects import *
@@ -130,7 +128,8 @@ class AnsibleRepo(object):
             for item in os.listdir(playbooks_dir):
                 playbook_path = ''.join([playbooks_dir, item])
                 if os.path.isfile(playbook_path) and re.match(layout['playbooks']['pattern'], item):
-                    playbooks[item] = AnsiblePlaybook(playbook_path)
+                    key = item.split('.')[0]
+                    playbooks[key] = AnsiblePlaybook(playbook_path)
 
             return playbooks
 
@@ -160,13 +159,4 @@ class AnsibleRepo(object):
         else:
             raise InvalidGitRepoUrlException(git_repo_url)
 
-
-if __name__ == '__main__':
-    repo = AnsibleRepo()
-    test_layout = yaml.load(open('sample_layout.yaml').read())
-    repo.load_from_local('/Users/akimotoakira/Box/git/icos-cd-services-deployer/', test_layout)
-
-    repo.generate_metadata()
-
-    print json.dumps(repo, cls=AnsibleRepoEncoder)
 
