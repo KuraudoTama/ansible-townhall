@@ -1,25 +1,47 @@
 from multiprocessing import Pool
 import pexpect
+import os
 from job_exception.ansible_job_exception import RecordNotFoundException
 from job_logging.ansible_job_logger import logger
 from job_persistence.ansible_job_db import job_DAO
+ 
+LOG_OUTPUT_RELATIVE_DIR = "/job_logging/log_output" 
 
+def _create_log_output_file_path(job_id):
+    current_file_realpath = os.path.realpath(__file__)
+    current_file_dir = os.path.dirname(current_file_realpath)
+    project_root_dir = os.path.dirname(current_file_dir)
+    
+    log_output_file_dir_realpath = project_root_dir + LOG_OUTPUT_RELATIVE_DIR
+    if not os.path.exists(log_output_file_dir_realpath):
+        os.mkdir(log_output_file_dir_realpath)
+    
+    log_output_file = "/%s.log" % job_id
+    log_output_file_realpath = log_output_file_dir_realpath + log_output_file
+    logger.info("log output file real path is: %s" % log_output_file_realpath)
+    return log_output_file_realpath 
 
-def launch_ansible_playbook_command(ansible_command, password=None, become_password=None):
+def launch_ansible_playbook_command(ansible_command, job_id, password=None, become_password=None):
     logger.info("Enter")
-    if password and become_password:
-        password_str = password + "\n"
-        become_password_str = become_password + "\n"
-        logger.info(pexpect.run(ansible_command, timeout=-1,
-                                events={"SSH password:": password_str, "SUDO password.*:": become_password_str}))
-    elif password:
-        password_str = password + "\n"
-        logger.info(pexpect.run(ansible_command, timeout=-1, events={"SSH password:": password_str}))
-    elif become_password:
-        become_password_str = become_password + "\n"
-        logger.info(pexpect.run(ansible_command, timeout=-1, events={".*password:": become_password_str}))
-    else:
-        logger.info(pexpect.run(ansible_command, timeout=-1))
+    log_output_file_realpath = _create_log_output_file_path(job_id)
+    output_file = open(log_output_file_realpath, 'a')
+    try:
+        if password and become_password:
+            password_str = password + "\n"
+            become_password_str = become_password + "\n"
+            logger.info(pexpect.run(ansible_command, logfile=output_file, timeout=-1,
+                                    events={"SSH password:": password_str, "SUDO password.*:": become_password_str}))
+        elif password:
+            password_str = password + "\n"
+            logger.info(pexpect.run(ansible_command, logfile=output_file, timeout=-1, events={"SSH password:": password_str}))
+        elif become_password:
+            become_password_str = become_password + "\n"
+            logger.info(pexpect.run(ansible_command, logfile=output_file, timeout=-1, events={".*password:": become_password_str}))
+        else:
+            logger.info(pexpect.run(ansible_command, logfile=output_file, timeout=-1))
+    finally:
+        if output_file:
+            output_file.close()
 
     logger.info("Exit")
 
@@ -101,7 +123,7 @@ class JobService(object):
 
         ansible_command, password, become_password = self.__make_ansible_command_str(job_doc)
         self.process_pool.apply_async(func=launch_ansible_playbook_command,
-                                      args=(ansible_command, password, become_password))
+                                      args=(ansible_command, job_id, password, become_password))
 
     def get_total_counts_grouped_by_categories(self, job_id):
         return job_DAO.get_total_counts_grouped_by_categories(job_id)
@@ -117,6 +139,34 @@ class JobService(object):
 
     def __decrypt_password(self, encrypted_password):
         pass
+    
+    def get_logs_output(self, job_id, read_size):
+        logger.info("Enter")
+        logger.info("log output file's read size is: %u" % read_size)
+        
+        log_output_file_realpath = _create_log_output_file_path(job_id)
+        log_output_dict = {}
+        if os.path.exists(log_output_file_realpath):
+            output_file_object = open(log_output_file_realpath, 'r')
+            job_doc = job_DAO.get_job_details(job_id, {"_id": False, "status": True})
+            job_status = job_doc["status"]
+            logger.info("Current job status is:%s" % job_status)
+            current_file_size = os.path.getsize(log_output_file_realpath)
+            logger.info("Current log output file's size snapshot is:%u" % current_file_size)
+            unread_size = current_file_size - read_size
+            logger.info("Current log output file's unread size is:%u" % unread_size)
+            output_file_object.seek(read_size)
+            log_content = output_file_object.read(unread_size)
+            logger.info("Current log output file's content is:%s" % log_content)
+            log_output_dict["read_size"] = current_file_size
+            log_output_dict["job_status"] = job_status
+            log_output_dict["current_log_content"] = log_content
+        
+        logger.info("Exit")
+        return log_output_dict
+            
+            
+            
 
 
 job_service = JobService()
