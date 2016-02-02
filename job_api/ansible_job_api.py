@@ -363,3 +363,60 @@ def get_task_duration_grouped_by_names(job_id):
     logger.info("Exit")
     return response
 
+
+@api.route("/logs/<job_id>")
+def get_logs_output(job_id):
+    '''
+    Get the logs based on the job_id.
+    To call this API, the form is:
+    http://<host>:<port>/logs/<job_id>?read_size=<positive integer>
+    Method: Get
+    
+    The client should periodically call this Rest API during the specified job's execution. 
+    It returns part of job's logs. The response would be:
+    1. If the logs file isn't generated when the client calls this API, empty json body "{}" returns.
+    2. Parts of the job's logs. json body is like:
+    {
+        "read_size": 10000,
+        "job_status": "Executing",
+        "current_log_content": "\'PLAY RECAP:*****************\n\'Task Name:"
+    }
+    
+    The "read_size" means how many bytes the client has read until last invocation. It's incremental value based on the growing file size.
+    It's mandatory to help this API to locate the logs file to know where to read the rest parts this time.
+    When calling this API in the first time, the read_size should be 0.
+    The returned "job_status" tells the client to decide when to stop calling this API.
+    The "job_status" includes "Success", "Failure", "New" and "Executing". 
+    The client should stop calling this API when the status is "Success" or "Failure".
+    The "current_log_content" contains parts of the logs output.
+    '''
+    logger.info("Enter")
+    response = None
+    try:
+        read_size = request.args.get("read_size", None)
+        
+        logger.info("read_size is : %s" % read_size)
+
+        if (read_size is None):
+            raise MissingKeyException("'read_size' query parameter is required!")
+
+        if not read_size.isdigit():
+            raise InvalidDataTypeException("The value of 'read_size' must be either 0 or positive integer.")
+        else:
+            read_size = int(read_size)
+
+        if read_size < 0:
+            raise InvalidDataException(
+                "The value of 'read_size' must be greater than or equal to 0.")
+
+        log_doc = job_service.get_logs_output(job_id, read_size)
+        response = make_response(json.jsonify(log_doc), 200)
+        
+    except (MissingKeyException, InvalidDataTypeException, InvalidDataException), e:
+        response = _make_error_response(400, str(e))
+    except Exception, e:
+        response = _make_error_response(500, str(e))
+
+    logger.info("Exit")
+    return response
+
