@@ -83,11 +83,17 @@ class AnsibleRepo(object):
         :return: True if everything is OK.
         """
         self.git_repo_url = git_repo_url
-        self.git_branch = git_branch
+
+        if git_branch:
+            self.git_branch = git_branch
+        else:
+            self.git_branch = 'master'
 
         self._layout = layout
 
         self.name = self._get_repo_name(self.git_repo_url)
+        if not local_base_path:
+            local_base_path = '/etc/ansible-townhall/repos/'
         self.local_repo_path = ''.join([local_base_path, self.name])
 
         self._create_repo_directory(self.local_repo_path)
