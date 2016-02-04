@@ -2,15 +2,18 @@ import json
 import os
 import re
 import shutil
-
-from git import Repo
-
+from git import Repo, RemoteProgress
 from ansible_objects import *
 
 
 class InvalidGitRepoUrlException(Exception):
     def __init__(self, git_repo_url):
         self.git_repo_url = git_repo_url
+
+
+class Progress(RemoteProgress):
+    def update(self, *args):
+        self.callback_func(self)
 
 
 class AnsibleRepoEncoder(JSONEncoder):
@@ -34,6 +37,8 @@ class AnsibleRepo(object):
 
         :return: The instance
         """
+        self._log_path = '/etc/ansible-townhall/logs/'
+
         self._regex = '(\w+://)(.+@)*([\w\d\.]+)(:[\d]+){0,1}/*(.*/(.*)\.git)'
 
         self.name = None
@@ -97,7 +102,15 @@ class AnsibleRepo(object):
         self.local_repo_path = ''.join([local_base_path, self.name])
 
         self._create_repo_directory(self.local_repo_path)
-        self._git_repo_obj = Repo.clone_from(self.git_repo_url, self.local_repo_path, branch=self.git_branch)
+
+        def write_gitprogress(progress):
+            with open(''.join([self._log_path, 'gitlog.', self.name]), 'a') as f:
+                f.write(progress._cur_line + '\n')
+
+        progress = Progress(write_gitprogress)
+
+        self._git_repo_obj = Repo.clone_from(self.git_repo_url, self.local_repo_path, branch=self.git_branch,
+                                             progress=progress)
 
     def get_layout(self):
         return self._layout
@@ -145,11 +158,11 @@ class AnsibleRepo(object):
             return None
         pattern_type = layout['roles']['type']
         if pattern_type == 'dirnames':
-            # TODO: support multiple directories
-            roles_dir = ''.join([self.local_repo_path, layout['root'], layout['roles']['pattern']])
-            for directory in os.listdir(roles_dir):
-                role = AnsibleRole(''.join([roles_dir, directory]))
-                roles[role.name] = role
+            for dir_role in layout['roles']['pattern'].split(','):
+                roles_dir = ''.join([self.local_repo_path, layout['root'], dir_role])
+                for directory in os.listdir(roles_dir):
+                    role = AnsibleRole(''.join([roles_dir, directory]))
+                    roles[role.name] = role
             return roles
 
     @staticmethod
@@ -165,4 +178,12 @@ class AnsibleRepo(object):
         else:
             raise InvalidGitRepoUrlException(git_repo_url)
 
+
+if __name__ == '__main__':
+    import yaml
+    repo = AnsibleRepo()
+    test_layout = yaml.load(open('sample_layout.yaml','r').read())
+    repo.load_from_local('/Users/akimotoakira/Box/git/icos-cd-services-deployer/', test_layout)
+    repo.generate_metadata()
+    print json.dumps(repo, cls= AnsibleRepoEncoder)
 
