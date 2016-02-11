@@ -1,7 +1,6 @@
 import json
 import time
 import pprint
-
 from bson.objectid import ObjectId
 from job_persistence.ansible_job_db import job_DAO
 
@@ -34,14 +33,14 @@ class CallbackModule(object):
                 print "----------------------------------------------------------------------------------"
                 now = time.strftime(self.TIME_FORMAT, time.localtime())
                 job_DAO.create_log(
-                                   dict(now=now, 
-                                        node_IP=host, 
-                                        task_name=self.current, 
-                                        category=category, 
-                                        task_duration=duration,
-                                        job_id=self.ansible_job_id, 
-                                        data=data)
-                                   )
+                    dict(now=now,
+                         node_IP=host,
+                         task_name=self.current,
+                         category=category,
+                         task_duration=duration,
+                         job_id=self.ansible_job_id,
+                         data=data)
+                )
 
     def on_any(self, *args, **kwargs):
         pass
@@ -123,5 +122,5 @@ class CallbackModule(object):
             job_DAO.update_job_status(self.ansible_job_id, "Failure")
         else:
             job_DAO.update_job_status(self.ansible_job_id, "Success")
-        
+
         pprint.pprint(stats)

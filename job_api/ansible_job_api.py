@@ -1,6 +1,7 @@
 from flask import json
 from flask import make_response
 from flask import request
+from flask.ext.cors import cross_origin
 from werkzeug.exceptions import BadRequest
 
 from job_exception.ansible_job_exception import InvalidContentTypeException
@@ -27,6 +28,7 @@ def _make_error_response(status_code, error_message):
 
 
 @api.route("/jobs")
+@cross_origin(origin='*')
 def get_job_list():
     '''
     Get the job list from the DB
@@ -41,7 +43,7 @@ def get_job_list():
     try:
         page_index = request.args.get("page_index", None)
         page_size = request.args.get("page_size", None)
-        
+
         logger.info("page_index is : %s" % page_index)
         logger.info("page_size is : %s" % page_size)
 
@@ -60,7 +62,7 @@ def get_job_list():
 
         job_list = job_service.get_job_list(page_index, page_size)
         response = make_response(json.jsonify(job_list), 200)
-        
+
     except (MissingKeyException, InvalidDataTypeException, InvalidDataException), e:
         response = _make_error_response(400, str(e))
     except Exception, e:
@@ -70,12 +72,13 @@ def get_job_list():
     return response
 
 
-#@api.route("/api/v1/ansible-job/codebase")
-#def access_codebase():
-    #pass
+# @api.route("/api/v1/ansible-job/codebase")
+# def access_codebase():
+# pass
 
 
 @api.route("/jobs", methods=["POST"])
+@cross_origin(origin='*')
 def create_job():
     '''
     Store a job and launch it. After launching the job, this api returns immediately with a new job id in response.
@@ -288,7 +291,7 @@ def get_job_details(job_id):
 
 
 @api.route("/logs/total-counts-grouped-by-categories/<job_id>")
-def get_total_counts_grouped_by_categories(job_id): 
+def get_total_counts_grouped_by_categories(job_id):
     '''
     Get the total counts of ansible task logs that are associated with 'job_id' and grouped by categories.
     The categories of ansible task are 'FAILED', 'OK' and 'UNREACHABLE'.
@@ -314,12 +317,13 @@ def get_total_counts_grouped_by_categories(job_id):
         response = _make_error_response(404, str(e))
     except Exception, e:
         response = _make_error_response(500, str(e))
-        
+
     logger.info("Exit")
     return response
 
+
 @api.route("/logs/task-duration-grouped-by-names/<job_id>")
-def get_task_duration_grouped_by_names(job_id): 
+def get_task_duration_grouped_by_names(job_id):
     '''
     Get each task duration which is associated with 'job_id' and grouped by task names.
     A task in playbook could be executed multiple times, so the task duration is an accumulated value.
@@ -349,13 +353,13 @@ def get_task_duration_grouped_by_names(job_id):
             raise InvalidDataTypeException("The 'size' must be positive integer.")
         else:
             size = int(size)
-            
+
         if size <= 0:
             raise InvalidDataException("The 'size' must be greater than 0.")
-        
+
         task_dict = job_service.get_task_duration_grouped_by_names(job_id, size)
         response = make_response(json.jsonify(task_dict), 200)
-        
+
     except (MissingKeyException, InvalidDataTypeException, InvalidDataException), e:
         response = _make_error_response(400, str(e))
     except Exception, e:
@@ -394,7 +398,7 @@ def get_logs_output(job_id):
     response = None
     try:
         read_size = request.args.get("read_size", None)
-        
+
         logger.info("read_size is : %s" % read_size)
 
         if (read_size is None):
@@ -411,7 +415,7 @@ def get_logs_output(job_id):
 
         log_doc = job_service.get_logs_output(job_id, read_size)
         response = make_response(json.jsonify(log_doc), 200)
-        
+
     except (MissingKeyException, InvalidDataTypeException, InvalidDataException), e:
         response = _make_error_response(400, str(e))
     except Exception, e:
@@ -419,4 +423,3 @@ def get_logs_output(job_id):
 
     logger.info("Exit")
     return response
-

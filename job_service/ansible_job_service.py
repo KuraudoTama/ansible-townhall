@@ -4,22 +4,24 @@ import os
 from job_exception.ansible_job_exception import RecordNotFoundException
 from job_logging.ansible_job_logger import logger
 from job_persistence.ansible_job_db import job_DAO
- 
-LOG_OUTPUT_RELATIVE_DIR = "/job_logging/log_output" 
+
+LOG_OUTPUT_RELATIVE_DIR = "/job_logging/log_output"
+
 
 def _create_log_output_file_path(job_id):
     current_file_realpath = os.path.realpath(__file__)
     current_file_dir = os.path.dirname(current_file_realpath)
     project_root_dir = os.path.dirname(current_file_dir)
-    
+
     log_output_file_dir_realpath = project_root_dir + LOG_OUTPUT_RELATIVE_DIR
     if not os.path.exists(log_output_file_dir_realpath):
         os.mkdir(log_output_file_dir_realpath)
-    
+
     log_output_file = "/%s.log" % job_id
     log_output_file_realpath = log_output_file_dir_realpath + log_output_file
     logger.info("log output file real path is: %s" % log_output_file_realpath)
-    return log_output_file_realpath 
+    return log_output_file_realpath
+
 
 def launch_ansible_playbook_command(ansible_command, job_id, password=None, become_password=None):
     logger.info("Enter")
@@ -33,10 +35,12 @@ def launch_ansible_playbook_command(ansible_command, job_id, password=None, beco
                                     events={"SSH password:": password_str, "SUDO password.*:": become_password_str}))
         elif password:
             password_str = password + "\n"
-            logger.info(pexpect.run(ansible_command, logfile=output_file, timeout=-1, events={"SSH password:": password_str}))
+            logger.info(
+                pexpect.run(ansible_command, logfile=output_file, timeout=-1, events={"SSH password:": password_str}))
         elif become_password:
             become_password_str = become_password + "\n"
-            logger.info(pexpect.run(ansible_command, logfile=output_file, timeout=-1, events={".*password:": become_password_str}))
+            logger.info(pexpect.run(ansible_command, logfile=output_file, timeout=-1,
+                                    events={".*password:": become_password_str}))
         else:
             logger.info(pexpect.run(ansible_command, logfile=output_file, timeout=-1))
     finally:
@@ -139,11 +143,11 @@ class JobService(object):
 
     def __decrypt_password(self, encrypted_password):
         pass
-    
+
     def get_logs_output(self, job_id, read_size):
         logger.info("Enter")
         logger.info("log output file's read size is: %u" % read_size)
-        
+
         log_output_file_realpath = _create_log_output_file_path(job_id)
         log_output_dict = {}
         if os.path.exists(log_output_file_realpath):
@@ -161,12 +165,9 @@ class JobService(object):
             log_output_dict["read_size"] = current_file_size
             log_output_dict["job_status"] = job_status
             log_output_dict["current_log_content"] = log_content
-        
+
         logger.info("Exit")
         return log_output_dict
-            
-            
-            
 
 
 job_service = JobService()
