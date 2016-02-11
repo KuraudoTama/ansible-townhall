@@ -1,0 +1,85 @@
+{% extends "layout.html" %}
+{% set active_page = 'about' %}
+{% block body %}
+
+<script type='text/javascript'>
+  function createRepo() {
+    var parameters = {
+      "gitRepoUrl": $("#git-url").val(),
+      "localBasePath": $("#git-local-base").val(),
+      "gitBranch": $("#git-branch").val(),
+      "layout": JSON.parse($("#git-layout").val())
+    };
+
+    $.ajax({
+      url: '/api/v1/repos',
+      type: 'POST',
+      data: JSON.stringify(parameters),
+      dataType: 'json',
+      contentType: 'text/json'
+    }).done(function(data) {
+      console.log(data);
+      $.ajax({
+        url: '/api/v1/logs/' + data.name,
+        type: 'GET',
+        contentType: 'text/json'
+      }).done(function(data) {
+        $("#git-status").text(data.logContent);
+      });
+    });
+  }
+</script>
+<section class="content-header">
+    <h1>
+        Create A New Ansible Repo
+    </h1>
+    <ol class="breadcrumb">
+        <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
+        <li class="active">Dashboard</li>
+    </ol>
+</section>
+
+<!-- Main content -->
+<section class="content">
+    <div class="box box-success">
+        <div class="box-header with-border">
+            <h3 class="box-title">Properties</h3>
+        </div>
+
+        <!-- /.box-header -->
+        <div class="box-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Git URL</label>
+                        <input class="form-control" id="git-url">
+                        <label>Branch</label>
+                        <input class="form-control" value="master" id="git-branch">
+                        <label>Local Base Path</label>
+                        <input class="form-control" value="/etc/ansible-townhall/repos/" id="git-local-base">
+                        <label>Layout Pattern (in JSON format)</label>
+                        <textarea class="form-control" id="git-layout" rows="10"></textarea>
+                    </div>
+                    <!-- /.form-group -->
+                </div>
+                <!-- /.col -->
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label id="git-status">No status</label>
+                    </div>
+                    <!-- /.form-group -->
+                </div>
+                <!-- /.row -->
+            </div>
+
+            <br>
+
+            <div class="box-footer">
+                Visit <a href="#">the documentation</a> for more examples and information
+                about
+                the plugin.
+            </div>
+            <button class="btn btn-primary" onclick="createRepo()">Create</button>
+</section><!-- /.content -->
+
+{% endblock %}
