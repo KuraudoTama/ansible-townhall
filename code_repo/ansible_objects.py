@@ -2,7 +2,8 @@ from json import JSONEncoder
 
 
 class AnsibleInventory(object):
-    def __init__(self, inv_path):
+    def __init__(self, name, inv_path):
+        self.name = name
         self._inv_path = inv_path
 
     def path(self):
@@ -12,6 +13,7 @@ class AnsibleInventory(object):
 class AnsibleInventoryEncoder(JSONEncoder):
     def default(self, o):
         return {
+            "name": o.name,
             "path": o.path()
         }
 
@@ -29,7 +31,8 @@ class AnsiblePlugin(object):
 
 
 class AnsiblePlaybook(object):
-    def __init__(self, book_path):
+    def __init__(self, name, book_path):
+        self.name = name
         self._book_path = book_path
 
     def path(self):
@@ -39,6 +42,7 @@ class AnsiblePlaybook(object):
 class AnsilePlaybookEncoder(JSONEncoder):
     def default(self, o):
         return {
+            "name": o.name,
             "path": o.path()
         }
 

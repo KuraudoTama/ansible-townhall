@@ -15,3 +15,8 @@ def ui_create_jobs():
 @ui.route('/ui/repos/list')
 def ui_list_repos():
     return render_template('template_repo_list.html')
+
+
+@ui.route('/ui/repos/create')
+def ui_create_repo():
+    return render_template('template_repo_create.html')

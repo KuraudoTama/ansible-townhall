@@ -62,3 +62,14 @@ class AnsibleRepoManager(object):
         new_repo_data.pop('_id')
         new_repo_data.update({"created": True, "message": "Repository created"})
         return new_repo_data
+
+
+if __name__ == '__main__':
+    import yaml
+    repo = AnsibleRepo()
+    test_layout = yaml.load(open('sample_layout.yaml').read())
+    repo.load_from_local('/Users/akimotoakira/Box/git/icos-cd-services-deployer/', test_layout)
+    repo.generate_metadata()
+    print json.dumps(repo, cls=AnsibleRepoEncoder)
+    mgr = AnsibleRepoManager()
+    mgr.save_to_db(repo)

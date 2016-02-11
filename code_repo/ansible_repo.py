@@ -134,7 +134,7 @@ class AnsibleRepo(object):
         if pattern_type == 'filenames':
             for filename in layout['inventory']['pattern'].split(','):
                 inv_path = ''.join([self.local_repo_path, layout['root'], filename])
-                inventories[filename] = AnsibleInventory(inv_path)
+                inventories[filename] = AnsibleInventory(filename,inv_path)
             return inventories
 
     def _process_playbooks(self, layout):
@@ -148,7 +148,7 @@ class AnsibleRepo(object):
                 playbook_path = ''.join([playbooks_dir, item])
                 if os.path.isfile(playbook_path) and re.match(layout['playbooks']['pattern'], item):
                     key = item.split('.')[0]
-                    playbooks[key] = AnsiblePlaybook(playbook_path)
+                    playbooks[key] = AnsiblePlaybook(key, playbook_path)
 
             return playbooks
 
@@ -178,12 +178,4 @@ class AnsibleRepo(object):
         else:
             raise InvalidGitRepoUrlException(git_repo_url)
 
-
-if __name__ == '__main__':
-    import yaml
-    repo = AnsibleRepo()
-    test_layout = yaml.load(open('sample_layout.yaml','r').read())
-    repo.load_from_local('/Users/akimotoakira/Box/git/icos-cd-services-deployer/', test_layout)
-    repo.generate_metadata()
-    print json.dumps(repo, cls= AnsibleRepoEncoder)
 
