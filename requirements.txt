@@ -1,3 +1,6 @@
+bson
 gitpython
 flask
 pymongo
+pexpect
+markupsafe
