@@ -1,0 +1,10 @@
+ansible-repo:
+  mongo-host: 127.0.0.1
+  mongo-port: 27017
+  mongo-db: ansible_db
+  mongo-col: repos
+ansible-job:
+  mongo-host: 127.0.0.1
+  mongo-port: 27017
+  mongo-db: ansible_db
+  mongo-col: job

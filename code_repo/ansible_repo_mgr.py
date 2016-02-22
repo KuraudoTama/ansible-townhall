@@ -25,7 +25,7 @@ class AnsibleRepoManager(object):
         repo_data = json.loads(json.dumps(repo, cls=AnsibleRepoEncoder))
         repo_data_db = self.collection.find_one({"name": repo_data["name"]})
         if repo_data_db is None:
-            self.collection.insert_one(repo_data)
+            self.collection.insert(repo_data)
         else:
             self.collection.replace_one({"name": repo_data["name"]}, repo_data)
 
