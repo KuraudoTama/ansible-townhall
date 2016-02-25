@@ -103,14 +103,14 @@ class AnsibleRepo(object):
 
         self._create_repo_directory(self.local_repo_path)
 
-        def write_gitprogress(progress):
-            with open(''.join([self._log_path, 'gitlog.', self.name]), 'a') as f:
-                f.write(progress._cur_line + '\n')
+        # def write_gitprogress(progress):
+        #     with open(''.join([self._log_path, 'gitlog.', self.name]), 'a') as f:
+        #         f.write(progress._cur_line + '\n')
 
-        progress = Progress(write_gitprogress)
+        #progress = Progress(write_gitprogress)
 
         self._git_repo_obj = Repo.clone_from(self.git_repo_url, self.local_repo_path, branch=self.git_branch,
-                                             progress=progress)
+                                             progress=None)
 
     def get_layout(self):
         return self._layout
