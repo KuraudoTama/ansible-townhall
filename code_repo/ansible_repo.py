@@ -169,7 +169,7 @@ class AnsibleRepo(object):
     def _create_repo_directory(local_repo_path):
         if os.path.exists(local_repo_path):
             shutil.rmtree(local_repo_path)
-        os.mkdir(local_repo_path)
+        os.makedirs(local_repo_path)
 
     def _get_repo_name(self, git_repo_url):
         m = re.match(self._regex, git_repo_url)
@@ -177,5 +177,3 @@ class AnsibleRepo(object):
             return m.groups()[-1]
         else:
             raise InvalidGitRepoUrlException(git_repo_url)
-
-
