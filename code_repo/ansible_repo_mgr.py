@@ -1,16 +1,15 @@
+import os
 import json
 from pymongo import MongoClient
 from ansible_repo import AnsibleRepo, AnsibleRepoEncoder
 
 
 class AnsibleRepoManager(object):
-    def __init__(self, config={}):
+    def __init__(self):
         self._repos = dict()
-        mongo_host = config.get('mongo-host') if 'mongo-host' in config else 'mongo'
-        mongo_port = config.get('mongo-port') if 'mongo-port' in config else 27017
-        mongo_db = config.get('mongo-db') if 'mongo-db' in config else 'ansible_db'
-        mongo_col = config.get('mongo-col') if 'mongo-col' in config else 'repos'
-        self.mongo_client = MongoClient(mongo_host, mongo_port)
+        mongo_db = 'ansible_db'
+        mongo_col = 'repos'
+        self.mongo_client = MongoClient(os.environ['MONGO_URL'])
         self.db = self.mongo_client[mongo_db]
         self.collection = self.db[mongo_col]
 
