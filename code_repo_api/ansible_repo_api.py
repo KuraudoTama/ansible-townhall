@@ -3,7 +3,6 @@ from flask import request, Response
 from flask.ext.cors import CORS, cross_origin
 from code_repo.ansible_repo_mgr import AnsibleRepoManager
 from utilities.web_util import crossdomain
-from utilities.config import ConfigReader
 from . import repo_api
 
 repo_mgr = AnsibleRepoManager()
@@ -12,7 +11,7 @@ repo_mgr.rebuild_from_db()
 common_header = {'Content-Type': 'text/json', 'Access-Control-Allow-Origin': '*'}
 
 
-@repo_api.route("/api/v1/repos", methods=['GET', 'POST'])
+@repo_api.route("/api/repos", methods=['GET', 'POST'])
 @crossdomain(origin='*')
 @cross_origin(origin='*')
 def repos_collection():
@@ -45,7 +44,7 @@ def repos_collection():
                             mimetype='application/json')
 
 
-@repo_api.route("/api/v1/logs/<repo_name>", methods=['GET'])
+@repo_api.route("/api/logs/<repo_name>", methods=['GET'])
 def repo_logs(repo_name):
     log_path = '/etc/ansible-townhall/logs/'
     file_name = ''.join([log_path, 'gitlog.', repo_name])
@@ -59,7 +58,7 @@ def repo_logs(repo_name):
     return Response(json.dumps(content), mimetype='application/json')
 
 
-@repo_api.route("/api/v1/repos/<repo_name>", methods=['GET', 'PUT', 'DELETE'])
+@repo_api.route("/api/repos/<repo_name>", methods=['GET', 'PUT', 'DELETE'])
 @cross_origin(origin='*')
 def repo_operations(repo_name):
     if request.method == 'GET':
@@ -70,6 +69,6 @@ def repo_operations(repo_name):
         return '{ "deleted":true, "message": "%s deleted" }' % repo_name, 200
 
 
-@repo_api.route("/api/v1/playbooks/<playbook_id>", methods=['GET'])
+@repo_api.route("/api/playbooks/<playbook_id>", methods=['GET'])
 def get_playbook(playbook_id):
     pass
