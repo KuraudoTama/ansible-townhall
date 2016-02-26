@@ -1,5 +1,6 @@
 from flask import Response
 from flask.ext.cors import cross_origin
+import json
 
 from code_repo.ansible_repo_mgr import AnsibleRepoManager
 from utilities.web_util import crossdomain
@@ -15,4 +16,4 @@ common_header = {'Content-Type': 'text/json', 'Access-Control-Allow-Origin': '*'
 @crossdomain(origin='*')
 @cross_origin(origin='*')
 def status_info():
-    return Response({'http': 'ok'}, mimetype='application/json')
+    return Response(json.dumps({'http': 'ok'}), mimetype='application/json')
