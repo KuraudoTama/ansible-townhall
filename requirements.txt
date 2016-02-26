@@ -1,6 +1,7 @@
 bson
 gitpython
 flask
+flask-cors
 pymongo
 pexpect
 markupsafe
