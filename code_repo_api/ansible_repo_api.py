@@ -6,7 +6,7 @@ from utilities.web_util import crossdomain
 from utilities.config import ConfigReader
 from . import repo_api
 
-repo_mgr = AnsibleRepoManager(config=ConfigReader(mode='local', source='conf/config.yaml').get_config(['ansible-repo']))
+repo_mgr = AnsibleRepoManager()
 repo_mgr.rebuild_from_db()
 
 common_header = {'Content-Type': 'text/json', 'Access-Control-Allow-Origin': '*'}
