@@ -2,8 +2,10 @@ import json
 import os
 import re
 import shutil
+
 from git import Repo, RemoteProgress
-from ansible_objects import *
+
+from ansible_common.ansible_objects import *
 
 
 class InvalidGitRepoUrlException(Exception):
