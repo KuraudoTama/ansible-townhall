@@ -1,19 +1,17 @@
 import json
+
 from flask import request, Response
-from flask.ext.cors import CORS, cross_origin
+from flask.ext.cors import cross_origin
+
 from code_repo.ansible_repo_mgr import AnsibleRepoManager
-from utilities.web_util import crossdomain
+from common.ansible_townhall_logger import logger
 from . import repo_api
-from job_logging.ansible_job_logger import logger
 
 repo_mgr = AnsibleRepoManager()
 repo_mgr.rebuild_from_db()
 
-common_header = {'Content-Type': 'text/json', 'Access-Control-Allow-Origin': '*'}
-
 
 @repo_api.route("/api/repos", methods=['GET', 'POST'])
-@crossdomain(origin='*')
 @cross_origin(origin='*')
 def repos_collection():
     """
@@ -41,12 +39,10 @@ def repos_collection():
                                                   repo_para.get('layout'),
                                                   git_branch=repo_para.get('gitBranch'),
                                                   local_base_path=repo_para.get('localBasePath'))
+                return Response(json.dumps(result), mimetype='application/json')
     except Exception, e:
         logger.error("Error %s" % str(e), exc_info=True)
-    
-
-    return Response(json.dumps(result),
-                    mimetype='application/json')
+        return '{ "created":false, "message": "%s" }' % e, 500
 
 
 @repo_api.route("/api/logs/<repo_name>", methods=['GET'])

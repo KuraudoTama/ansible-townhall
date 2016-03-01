@@ -1,7 +1,8 @@
 from bson.objectid import ObjectId
+
+from common.ansible_townhall_logger import logger
 from db_connection import job_db
 from job_exception.ansible_job_exception import RecordNotFoundException
-from job_logging.ansible_job_logger import logger
 
 
 class JobPersistence(object):

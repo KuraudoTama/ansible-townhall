@@ -1,13 +1,14 @@
 from pymongo import MongoClient
 import os
 import json
-from ansible_common.ansible_objects import AnsibleInventory, AnsibleInventoryEncoder
+from common.ansible_objects import AnsibleInventory, AnsibleInventoryEncoder
+import common.settings as settings
 
 
 class AnsibleInventoryManager(object):
     def __init__(self):
         self._inventories = dict()
-        self._mongo_client = MongoClient(os.environ['MONGO_URL'])
+        self._mongo_client = MongoClient(settings.get_mongodb_url())
         self._db = self._mongo_client['ansible_db']
         self._collection = self._db['inventories']
         self._rebuild_from_db()
