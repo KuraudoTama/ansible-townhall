@@ -3,7 +3,7 @@ Ansible Townhall
 
 1. Before running this project for test/dev purpose, you need to add the root folder "`ansible-townhall`" to **PYTHONPATH**. Otherwise the python interpreter is unable to find the modules of this project.
 
-    For example, suppose that you put the "`ansible-townhall`" under */root/python_app* folder on Linux like this: */root/python_app/ansible_job*.
+    For example, suppose that you put the "`ansible-townhall`" under */root/python_app* folder on Linux like this: */root/python_app/ansible-townhall*.
     It's better to write "`export PYTHONPATH=$PYTHONPATH:/root/python_app/ansible-townhall`" into `.bashrc` file so that when you log in Linux everytime,
     that path could be added to **PYTHONPATH**.
 
