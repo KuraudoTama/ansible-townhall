@@ -5,7 +5,7 @@ import shutil
 
 from git import Repo, RemoteProgress
 
-from ansible_common.ansible_objects import *
+from common.ansible_objects import *
 
 
 class InvalidGitRepoUrlException(Exception):

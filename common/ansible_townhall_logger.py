@@ -1,11 +1,12 @@
 from logging.handlers import RotatingFileHandler
 import logging
+import common.settings as settings
 
-LOG_FILE = "/etc/ansible/job_logging/ansible_job.log"
+LOG_FILE = settings.get_log_file_path()
 LOG_FILE_SIZE = 10 * 1024 * 1024
 LOG_FILE_COUNT = 3
 LOG_FORMAT = "%(asctime)s::%(name)s::%(filename)s::%(funcName)s::[line:%(lineno)d]-%(message)s"
-LOGGER_NAME = "ansible-job"
+LOGGER_NAME = "ansible-townhall"
 
 file_handler = RotatingFileHandler(LOG_FILE, mode="a", maxBytes=LOG_FILE_SIZE, backupCount=LOG_FILE_COUNT)
 file_handler.setLevel(logging.DEBUG)

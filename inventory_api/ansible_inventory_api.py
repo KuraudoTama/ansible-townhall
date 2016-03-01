@@ -1,9 +1,8 @@
-import json
 from flask import request, Response
-from flask.ext.cors import CORS, cross_origin
-from . import inventory_api
-from job_logging.ansible_job_logger import logger
+from flask.ext.cors import cross_origin
 
+from common.ansible_townhall_logger import logger
+from . import inventory_api
 
 common_header = {'Content-Type': 'text/json', 'Access-Control-Allow-Origin': '*'}
 
@@ -30,6 +29,7 @@ def inventory_collection():
     """
     try:
         if request.method == 'GET':
+            logger.info('hi')
             return Response('{ "msg":"hello"}', mimetype='application/json')
     except Exception, e:
         logger.error("Error %s" % str(e), exc_info=True)

@@ -1,6 +1,8 @@
-import os
 import json
+
 from pymongo import MongoClient
+
+import common.settings as settings
 from ansible_repo import AnsibleRepo, AnsibleRepoEncoder
 
 
@@ -9,7 +11,7 @@ class AnsibleRepoManager(object):
         self._repos = dict()
         mongo_db = 'ansible_db'
         mongo_col = 'repos'
-        self.mongo_client = MongoClient(os.environ['MONGO_URL'])
+        self.mongo_client = MongoClient(settings.get_mongodb_url())
         self.db = self.mongo_client[mongo_db]
         self.collection = self.db[mongo_col]
 
@@ -62,13 +64,3 @@ class AnsibleRepoManager(object):
         new_repo_data.update({"created": True, "message": "Repository created"})
         return new_repo_data
 
-
-if __name__ == '__main__':
-    import yaml
-    repo = AnsibleRepo()
-    test_layout = yaml.load(open('sample_layout.yaml').read())
-    repo.load_from_local('/Users/akimotoakira/Box/git/icos-cd-services-deployer/', test_layout)
-    repo.generate_metadata()
-    print json.dumps(repo, cls=AnsibleRepoEncoder)
-    mgr = AnsibleRepoManager()
-    mgr.save_to_db(repo)

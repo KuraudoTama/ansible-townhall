@@ -1,8 +1,10 @@
-from multiprocessing import Pool
-import pexpect
 import os
+from multiprocessing import Pool
+
+import pexpect
+
+from common.ansible_townhall_logger import logger
 from job_exception.ansible_job_exception import RecordNotFoundException
-from job_logging.ansible_job_logger import logger
 from job_persistence.ansible_job_db import job_DAO
 
 LOG_OUTPUT_RELATIVE_DIR = "/job_logging/log_output"
