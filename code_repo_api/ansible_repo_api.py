@@ -6,6 +6,7 @@ from flask.ext.cors import CORS, cross_origin
 from code_repo.ansible_repo_mgr import AnsibleRepoManager
 from utilities.web_util import crossdomain
 from . import repo_api
+from job_logging.ansible_job_logger import logger
 
 repo_mgr = AnsibleRepoManager()
 repo_mgr.rebuild_from_db()
@@ -29,21 +30,25 @@ def repos_collection():
 
     :return:
     """
-    if request.method == 'GET':
-        return Response(repo_mgr.list_repos(), mimetype='application/json')
-    if request.method == 'POST':
-        if request.data:
-            repo_para = json.loads(request.data)
-            if 'gitRepoUrl' not in repo_para or \
-                            'layout' not in repo_para:
-                return '{ "created":false, "message": "Parameters Error" }', 500
-            result = repo_mgr.create_new_repo(repo_para.get('gitRepoUrl'),
-                                              repo_para.get('layout'),
-                                              git_branch=repo_para.get('gitBranch'),
-                                              local_base_path=repo_para.get('localBasePath'))
+    try:
+        if request.method == 'GET':
+            return Response(repo_mgr.list_repos(), mimetype='application/json')
+        if request.method == 'POST':
+            if request.data:
+                repo_para = json.loads(request.data)
+                if 'gitRepoUrl' not in repo_para or \
+                                'layout' not in repo_para:
+                    return '{ "created":false, "message": "Parameters Error" }', 500
+                result = repo_mgr.create_new_repo(repo_para.get('gitRepoUrl'),
+                                                  repo_para.get('layout'),
+                                                  git_branch=repo_para.get('gitBranch'),
+                                                  local_base_path=repo_para.get('localBasePath'))
+    except Exception, e:
+        logger.error("Error %s" % str(e), exc_info=True)
+    
 
-            return Response(json.dumps(result),
-                            mimetype='application/json')
+    return Response(json.dumps(result),
+                    mimetype='application/json')
 
 
 @repo_api.route("/api/v1/logs/<repo_name>", methods=['GET'])
