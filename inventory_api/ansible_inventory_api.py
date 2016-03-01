@@ -15,13 +15,18 @@ def inventory_collection():
     The POST data should be in this format:
 
     {
-      "gitRepoUrl": <git repo url>,
-      "gitBranch": <git branch>,    - Optional, default is master
-      "layout": <the layout json data>,
-      "localBasePath": <the local base path for the code repo>    - Optional
+      "name": <inventory name>,
+      "content": <inventory content>
     }
 
     :return:
+
+    {
+      "name": <inventory name>,
+      "content": <inventory content>,
+      "path": <inventory path on the server>,
+      "message": "created"
+    }
     """
     try:
         if request.method == 'GET':
